@@ -9,22 +9,16 @@ public static class Program
     [STAThread]
     public static void Main(string[] args)
     {
-        Uri source;
-        if (!args.Contains("dev"))
-        {
-            var pathToWwwroot =
-                Path.Combine(
-                    Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ??
-                    throw new InvalidOperationException(), "wwwroot");
-            source = new Uri($"file:///{pathToWwwroot}/index.html");
-        }
+        var isDev = args.Contains("dev");
 
-        else
-        {
-            source = new Uri("http://localhost:5173/");
-        }
+        var src = isDev
+            ? "http://localhost:5173/"
+            : $"file:///{Path.Combine(
+                Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ??
+                throw new InvalidOperationException(), "wwwroot")}/index.html";
 
-        Application.Run(new WebviewWindow(source)
+
+        Application.Run(new WebviewWindow(new Uri(src))
         {
             Width = 800,
             Height = 500

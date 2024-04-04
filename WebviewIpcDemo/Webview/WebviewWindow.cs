@@ -9,32 +9,42 @@ public class WebviewWindow : Form
 {
     public WebviewWindow(Uri source)
     {
-        Console.WriteLine("Initializing WebviewForm");
         var webView = new WebView2
         {
             Dock = DockStyle.Fill,
             Source = source
         };
         var webMessageHandler = new WebMessageReceivedHandler(webView, [GetMessage]);
-        var scriptLoader = new ScriptLoader(Assembly.GetExecutingAssembly());
-        var communicationScript = scriptLoader.GetScript("communication.js");
+
+        var communicationScript = new ScriptLoader(Assembly.GetExecutingAssembly()).GetScript("communication.js");
+
         Controls.Add(webView);
+
         webView.CoreWebView2InitializationCompleted += async (_, e) =>
             await new CoreWebView2InitializationHandler(webView, communicationScript).OnReceived(e);
+
         webView.WebMessageReceived += (_, e) =>
             webMessageHandler.OnReceived(e);
     }
 
     private class ReturnMessage
     {
-        public string Message { get; set; }
-        public string Id { get; set; }
+        public required string Message { get; set; }
+        public required string Id { get; set; }
         public DateTime Timestamp { get; set; }
     }
 
-    private ReturnMessage GetMessage()
+    private class ReturnMessageParams
     {
-        return new ReturnMessage()
+        public bool Error { get; set; }
+    }
+
+    private ReturnMessage GetMessage(ReturnMessageParams returnMessageParams)
+    {
+        if (returnMessageParams is not null && returnMessageParams.Error)
+            throw new Exception("Custom error message at GetMessage method");
+
+        return new ReturnMessage
         {
             Message = "Hello from C#",
             Id = "1",
